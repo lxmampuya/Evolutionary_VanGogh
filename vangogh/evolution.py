@@ -28,7 +28,9 @@ class Evolution:
                  noisy_evaluations=False,
                  verbose=False,
                  generation_reporter=None,
-                 seed=0):
+                 seed=0,
+                 sort=0
+                ):
 
         self.reference_image: Image = reference_image.copy()
         self.reference_image.thumbnail((int(self.reference_image.width / IMAGE_SHRINK_SCALE),
@@ -63,6 +65,7 @@ class Evolution:
         self.crossover_method = crossover_method
         self.num_evaluations = 0
         self.initialization = initialization
+        self.sort = sort
 
         np.random.seed(seed)
         self.seed = seed
@@ -132,6 +135,9 @@ class Evolution:
 
         self.population = selection.select(self.population, self.population_size,
                                            selection_name=self.selection_name)
+        if self.sort:
+            idx = np.lexsort((self.population.genes[:, 1], self.population.genes[:, 0]))
+            self.population.genes = self.population.genes[idx]
 
     def run(self):
         data = []
@@ -175,7 +181,8 @@ class Evolution:
                          "time-elapsed": time.time() - start_time_seconds,
                          "best-fitness": self.elite_fitness,
                          "crossover-method": self.crossover_method,
-                         "population-size": self.population_size, "num-points": self.num_points,
+                         "population-size": self.population_size,
+                         "num-points": self.num_points,
                          "initialization": self.initialization,
                          "seed": self.seed})
             if self.generation_reporter is not None:
@@ -212,5 +219,6 @@ if __name__ == '__main__':
                     num_features_mutation_strength_decay_generations=None,
                     selection_name='tournament_4',
                     noisy_evaluations=False,
-                    verbose=True)
+                    verbose=True,
+                    sort=0)
     evo.run()
