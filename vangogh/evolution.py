@@ -20,9 +20,9 @@ class Evolution:
                  evaluation_budget=-1,
                  crossover_method="ONE_POINT",
                  mutation_probability='inv_mutable_genotype_length',
-                 num_features_mutation_strength=.25,
-                 num_features_mutation_strength_decay=None,
-                 num_features_mutation_strength_decay_generations=None,
+                 mutation_schedule="constant",
+                 initial_mutation_strength=0.25,
+                 final_mutation_strength=0.01,
                  selection_name='tournament_2',
                  initialization='RANDOM',
                  noisy_evaluations=False,
@@ -53,9 +53,10 @@ class Evolution:
         self.generation_budget = generation_budget
         self.evaluation_budget = evaluation_budget
         self.mutation_probability = mutation_probability
-        self.num_features_mutation_strength = num_features_mutation_strength
-        self.num_features_mutation_strength_decay = num_features_mutation_strength_decay
-        self.num_features_mutation_strength_decay_generations = num_features_mutation_strength_decay_generations
+        self.mutation_schedule = mutation_schedule
+        self.initial_mutation_strength = initial_mutation_strength
+        self.final_mutation_strength = final_mutation_strength
+        self.num_features_mutation_strength = initial_mutation_strength
         self.selection_name = selection_name
         self.noisy_evaluations = noisy_evaluations
         self.verbose = verbose
@@ -133,6 +134,21 @@ class Evolution:
         self.population = selection.select(self.population, self.population_size,
                                            selection_name=self.selection_name)
 
+    def update_mutation_strength(self, generation):
+        progress = generation / self.generation_budget
+
+        if self.mutation_schedule == "constant":
+            self.num_features_mutation_strength = self.initial_mutation_strength
+
+        elif self.mutation_schedule == "linear":
+            self.num_features_mutation_strength = (self.initial_mutation_strength - progress * (self.initial_mutation_strength - self.final_mutation_strength))
+
+        elif self.mutation_schedule == "exponential":
+            self.num_features_mutation_strength = (self.initial_mutation_strength * (self.final_mutation_strength / self.initial_mutation_strength) ** progress)
+
+        elif self.mutation_schedule == "quadratic":
+            self.num_features_mutation_strength = (self.final_mutation_strength + (self.initial_mutation_strength - self.final_mutation_strength) * (1 - progress) ** 2)
+    
     def run(self):
         data = []
 
@@ -153,9 +169,7 @@ class Evolution:
         # run generation_budget
         i_gen = 0
         while True:
-            if self.num_features_mutation_strength_decay_generations is not None:
-                if i_gen in self.num_features_mutation_strength_decay_generations:
-                    self.num_features_mutation_strength *= self.num_features_mutation_strength_decay
+            self.update_mutation_strength(i_gen)
 
             if self.evolution_type == 'classic':
                 self.__classic_generation(merge_parent_offspring=False)
@@ -177,6 +191,9 @@ class Evolution:
                          "crossover-method": self.crossover_method,
                          "population-size": self.population_size, "num-points": self.num_points,
                          "initialization": self.initialization,
+                         "mutation-schedule": self.mutation_schedule,
+                         "initial-mutation-strength": self.initial_mutation_strength,
+                         "final-mutation-strength": self.final_mutation_strength,
                          "seed": self.seed})
             if self.generation_reporter is not None:
                 self.generation_reporter(
@@ -207,9 +224,9 @@ if __name__ == '__main__':
                     generation_budget=300,
                     crossover_method='ONE_POINT',
                     initialization='RANDOM',
-                    num_features_mutation_strength=.25,
-                    num_features_mutation_strength_decay=None,
-                    num_features_mutation_strength_decay_generations=None,
+                    mutation_schedule='linear',
+                    initial_mutation_strength=0.25,
+                    final_mutation_strength=0.01,
                     selection_name='tournament_4',
                     noisy_evaluations=False,
                     verbose=True)
