@@ -19,10 +19,15 @@ class Evolution:
                  generation_budget=-1,
                  evaluation_budget=-1,
                  crossover_method="ONE_POINT",
-                 mutation_probability='inv_mutable_genotype_length',
-                 mutation_schedule="constant",
+                 
+                 mutation_strength_schedule="constant",
                  initial_mutation_strength=0.25,
-                 final_mutation_strength=0.01,
+                 final_mutation_strength=0.25,
+                 
+                 mutation_prob_schedule="constant",
+                 initial_mutation_prob=0.1,
+                 final_mutation_prob=0.1,
+                 
                  selection_name='tournament_2',
                  initialization='RANDOM',
                  noisy_evaluations=False,
@@ -52,11 +57,18 @@ class Evolution:
         self.population_size = population_size
         self.generation_budget = generation_budget
         self.evaluation_budget = evaluation_budget
-        self.mutation_probability = mutation_probability
-        self.mutation_schedule = mutation_schedule
+        
+        self.mutation_strength_schedule = mutation_strength_schedule
         self.initial_mutation_strength = initial_mutation_strength
         self.final_mutation_strength = final_mutation_strength
+        
+        self.mutation_prob_schedule = mutation_prob_schedule
+        self.initial_mutation_prob = initial_mutation_prob
+        self.final_mutation_prob = final_mutation_prob
+        
         self.num_features_mutation_strength = initial_mutation_strength
+        self.mutation_probability = initial_mutation_prob
+        
         self.selection_name = selection_name
         self.noisy_evaluations = noisy_evaluations
         self.verbose = verbose
@@ -83,13 +95,6 @@ class Evolution:
         self.population = Population(self.population_size, self.genotype_length, self.initialization)
         self.elite = None
         self.elite_fitness = np.inf
-
-        # set up mutation probability if set to default "inv_mutable_genotype_length"
-        if mutation_probability == 'inv_genotype_length':
-            self.mutation_probability = 1 / self.genotype_length
-        elif mutation_probability == "inv_mutable_genotype_length":
-            num_unmutable_features = 0
-            self.mutation_probability = 1 / (self.genotype_length - num_unmutable_features)
 
             # incompatibilities
         if self.evolution_type == 'p+o' and self.noisy_evaluations:
@@ -134,19 +139,35 @@ class Evolution:
         self.population = selection.select(self.population, self.population_size,
                                            selection_name=self.selection_name)
 
+    def update_mutation_probability(self, generation):
+    
+        progress = generation / self.generation_budget
+    
+        if self.mutation_prob_schedule == "constant":
+            self.mutation_probability = self.initial_mutation_prob
+    
+        elif self.mutation_prob_schedule == "linear":
+            self.mutation_probability = (self.initial_mutation_prob - progress * (self.initial_mutation_prob - self.final_mutation_prob))
+    
+        elif self.mutation_prob_schedule == "exponential":
+            self.mutation_probability = (self.initial_mutation_prob * (self.final_mutation_prob / self.initial_mutation_prob) ** progress)
+    
+        elif self.mutation_prob_schedule == "quadratic":
+            self.mutation_probability = (self.final_mutation_prob + (self.initial_mutation_prob - self.final_mutation_prob) * (1 - progress) ** 2)
+    
     def update_mutation_strength(self, generation):
         progress = generation / self.generation_budget
 
-        if self.mutation_schedule == "constant":
+        if self.mutation_strength_schedule == "constant":
             self.num_features_mutation_strength = self.initial_mutation_strength
 
-        elif self.mutation_schedule == "linear":
+        elif self.mutation_strength_schedule == "linear":
             self.num_features_mutation_strength = (self.initial_mutation_strength - progress * (self.initial_mutation_strength - self.final_mutation_strength))
 
-        elif self.mutation_schedule == "exponential":
+        elif self.mutation_strength_schedule == "exponential":
             self.num_features_mutation_strength = (self.initial_mutation_strength * (self.final_mutation_strength / self.initial_mutation_strength) ** progress)
 
-        elif self.mutation_schedule == "quadratic":
+        elif self.mutation_strength_schedule == "quadratic":
             self.num_features_mutation_strength = (self.final_mutation_strength + (self.initial_mutation_strength - self.final_mutation_strength) * (1 - progress) ** 2)
     
     def run(self):
@@ -170,6 +191,7 @@ class Evolution:
         i_gen = 0
         while True:
             self.update_mutation_strength(i_gen)
+            self.update_mutation_probability(i_gen)
 
             if self.evolution_type == 'classic':
                 self.__classic_generation(merge_parent_offspring=False)
@@ -188,12 +210,16 @@ class Evolution:
                          "num-evaluations": self.num_evaluations,
                          "time-elapsed": time.time() - start_time_seconds,
                          "best-fitness": self.elite_fitness,
+                         "avg-fitness": np.mean(self.population.fitnesses),
                          "crossover-method": self.crossover_method,
                          "population-size": self.population_size, "num-points": self.num_points,
                          "initialization": self.initialization,
-                         "mutation-schedule": self.mutation_schedule,
+                         "mutation-strength-schedule": self.mutation_strength_schedule,
                          "initial-mutation-strength": self.initial_mutation_strength,
                          "final-mutation-strength": self.final_mutation_strength,
+                         "mutation-prob-schedule": self.mutation_prob_schedule,
+                         "initial-mutation-prob": self.initial_mutation_prob,
+                         "final-mutation-prob": self.final_mutation_prob,
                          "seed": self.seed})
             if self.generation_reporter is not None:
                 self.generation_reporter(
@@ -224,9 +250,15 @@ if __name__ == '__main__':
                     generation_budget=300,
                     crossover_method='ONE_POINT',
                     initialization='RANDOM',
-                    mutation_schedule='linear',
+                    
+                    mutation_strength_schedule='linear',
                     initial_mutation_strength=0.25,
                     final_mutation_strength=0.01,
+                    
+                    mutation_prob_schedule='constant',
+                    initial_mutation_prob=0.01,
+                    final_mutation_prob=0.01,
+                    
                     selection_name='tournament_4',
                     noisy_evaluations=False,
                     verbose=True)
