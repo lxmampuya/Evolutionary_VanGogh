@@ -23,6 +23,7 @@ class H_evolution(Evolution):
         """
         super().__init__(*args, **kwargs)
         self.schedule = schedule
+        self.schedule_str = "_".join(f"{tup[0]}-{tup[1]}" for tup in schedule)
         assert self.schedule[0][1] == self.num_points, "First num_point in schedule must match initial num_point"
 
     def __duplicate_points(self, merge_parent_offspring=False, new_num_points=None):
@@ -43,6 +44,7 @@ class H_evolution(Evolution):
         old_len = self.genotype_length # 250 for 50points
         self.genotype_length = len(feature_intervals)
         new_len = self.genotype_length # 500 for 100 points
+        print(f"UPDATED genotype_length from {old_len} to {new_len}")
 
         # 1. create offspring population
         offspring = Population(self.population_size, self.genotype_length, self.initialization)
@@ -96,7 +98,7 @@ class H_evolution(Evolution):
     def run(self):
         # num_points affects feature_intervals,genotype_length
         print("---Running H-evolution---")
-        print(self.schedule)
+        print(f"Schedule(tau,num_points): {self.schedule}")
         # Mostly from evolution.run(), with some modifications to support hierarchical evolution
         data = []
         self.population.initialize(self.feature_intervals)
@@ -135,6 +137,8 @@ class H_evolution(Evolution):
                     raise ValueError('unknown evolution type:', self.evolution_type)
                 if len(self.schedule) > 0:
                     gen_to_update, new_num_points = self.schedule.pop(0)
+                    gen_to_update = int(gen_to_update * self.generation_budget)
+                    # print(f"next update at generation {gen_to_update} with num_points {new_num_points}")
             #! normal updates
             else:
                 if self.evolution_type == 'classic':
@@ -147,7 +151,7 @@ class H_evolution(Evolution):
             # generation terminated
             i_gen += 1
             if self.verbose:
-                if i_gen % 10 == 0:
+                if i_gen % 25 == 0:
                     print('generation:', i_gen, 'best fitness:', self.elite_fitness, 'avg. fitness:',
                       np.mean(self.population.fitnesses))
 
@@ -155,6 +159,8 @@ class H_evolution(Evolution):
                          "num-evaluations": self.num_evaluations,
                          "time-elapsed": time.time() - start_time_seconds,
                          "best-fitness": self.elite_fitness,
+                         "avg-fitness": np.mean(self.population.fitnesses),
+                         "algo": "h1",
                          "crossover-method": self.crossover_method,
                          "population-size": self.population_size, "num-points": self.num_points,
                          "initialization": self.initialization,
@@ -176,5 +182,5 @@ class H_evolution(Evolution):
         draw_voronoi_image(self.elite, self.reference_image.width, self.reference_image.height,
                            scale=IMAGE_SHRINK_SCALE) \
             .save(
-            f"./img/van_gogh_final_{self.seed}_{self.population_size}_{self.crossover_method}_{self.num_points}_{self.initialization}_{self.generation_budget}.png")
+                f"./img/h1/final_{self.seed}_{self.num_points}_{self.generation_budget}_{self.schedule_str}.png")
         return data

@@ -167,7 +167,7 @@ class Evolution:
             # generation terminated
             i_gen += 1
             if self.verbose:
-                if i_gen % 100 == 0:
+                if i_gen % 25 == 0:
                     print('generation:', i_gen, 'best fitness:', self.elite_fitness, 'avg. fitness:',
                       np.mean(self.population.fitnesses))
 
@@ -175,6 +175,8 @@ class Evolution:
                          "num-evaluations": self.num_evaluations,
                          "time-elapsed": time.time() - start_time_seconds,
                          "best-fitness": self.elite_fitness,
+                         "avg-fitness": np.mean(self.population.fitnesses),
+                         "algo": "baseline",
                          "crossover-method": self.crossover_method,
                          "population-size": self.population_size, "num-points": self.num_points,
                          "initialization": self.initialization,
