@@ -61,7 +61,7 @@ class Evolution:
         self.mutation_strength_schedule = mutation_strength_schedule
         self.initial_mutation_strength = initial_mutation_strength
         self.final_mutation_strength = final_mutation_strength
-        
+
         self.mutation_prob_schedule = mutation_prob_schedule
         self.initial_mutation_prob = initial_mutation_prob
         self.final_mutation_prob = final_mutation_prob
@@ -95,6 +95,13 @@ class Evolution:
         self.population = Population(self.population_size, self.genotype_length, self.initialization)
         self.elite = None
         self.elite_fitness = np.inf
+
+        # set up mutation probability if set to baseline
+        if mutation_prob_schedule == "baseline":
+            num_unmutable_features = 0
+            self.mutation_probability = 1 / (self.genotype_length - num_unmutable_features)
+        if mutation_strength_schedule == "baseline":
+            self.num_features_mutation_strength = 0.25
 
             # incompatibilities
         if self.evolution_type == 'p+o' and self.noisy_evaluations:
@@ -140,7 +147,6 @@ class Evolution:
                                            selection_name=self.selection_name)
 
     def update_mutation_probability(self, generation):
-    
         progress = generation / self.generation_budget
     
         if self.mutation_prob_schedule == "constant":
@@ -190,8 +196,10 @@ class Evolution:
         # run generation_budget
         i_gen = 0
         while True:
-            self.update_mutation_strength(i_gen)
-            self.update_mutation_probability(i_gen)
+            if self.mutation_strength_schedule != "baseline":
+                self.update_mutation_strength(i_gen)
+            if self.mutation_prob_schedule != "baseline":
+                self.update_mutation_probability(i_gen)
 
             if self.evolution_type == 'classic':
                 self.__classic_generation(merge_parent_offspring=False)
@@ -238,7 +246,7 @@ class Evolution:
         draw_voronoi_image(self.elite, self.reference_image.width, self.reference_image.height,
                            scale=IMAGE_SHRINK_SCALE) \
             .save(
-            f"./img/van_gogh_final_{self.seed}_{self.population_size}_{self.crossover_method}_{self.num_points}_{self.initialization}_{self.generation_budget}.png")
+            f"./img/van_gogh_intermediate_{self.seed}_{self.mutation_strength_schedule}_{self.initial_mutation_strength}_{self.final_mutation_strength}_{self.mutation_prob_schedule}_{self.initial_mutation_prob}_{self.final_mutation_prob}_{self.generation_budget}.png")
         return data
 
 
