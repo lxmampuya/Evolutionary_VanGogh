@@ -11,6 +11,7 @@ To start a Jupyter notebook instance, have Jupyter notebook [installed](https://
 ---
 
 ## Hypothesis1
+
 - Hierarchical EA where we start with fewer points in earlier generation and increase it later. See hier_evo.py for code changes.
 1. Switch to the branch `git switch hypo1-hierarchical`
 2. Open the notebook analysis_h1.ipynb. You may load the saved data (df object) with `df = pd.read_pickle("0604_evolution_results.pkl")`. This is also in a cell near the bottom of the notebook.
@@ -19,11 +20,17 @@ To start a Jupyter notebook instance, have Jupyter notebook [installed](https://
 
 ---
 
-#Hypothesis 2
+## Hypothesis 2
+
 - Mutation Decay for both the mutation strength and the mutation probability
-1. switch to the branch `git switch decay-mutation-rate`
-2. the full experiment is in `analysis.ipynb` including the figures used in the presentation
+1. Switch to the branch `git switch decay-mutation-rate`
+2. The full experiment is in `analysis.ipynb` including the figures used in the presentation
 3. If you wish to also run the random search you can change `random_search = False` into `random_search = True` in the third cell and run the notebook again
 
 ---
 
+## Hypothesis 3
+
+- Uniform crossover applied to the spatial and color genes
+1. Switch to the branch `git switch split-position-color-ga
+2. The full experiment is in `analysis.ipynb` including the figures used in the presentation
