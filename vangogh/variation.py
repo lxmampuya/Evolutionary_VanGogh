@@ -11,10 +11,121 @@ def crossover(genes, method="ONE_POINT"):
 
         for i in range(len(genes)):
             offspring[i,:] = np.where(np.arange(genes.shape[1]) <= crossover_points[i], parents_1[i,:], parents_2[i,:])
+    elif method == "UNIVARIATE":
+        offspring = univariate_crossover(genes, "UNIVARIATE")
+    elif method == "SPLIT_POS_COLOR":
+        offspring = split_position_color_crossover(genes)
+    elif method == "SPLIT_POS_COLOR_ONE_POINT":
+        offspring = split_position_color_crossover_one_point_color(genes)
     else:
         raise Exception("Unknown crossover method")
 
     return offspring
+
+
+def univariate_crossover(genes, method="UNIVARIATE"):
+    parents_1 = np.vstack((genes[:len(genes) // 2], genes[:len(genes) // 2]))
+    parents_2 = np.vstack((genes[len(genes) // 2:], genes[len(genes) // 2:]))
+
+    if method == "UNIVARIATE":
+        crossover_mask = np.random.choice([True, False], size=genes.shape)
+        offspring = np.zeros(shape=genes.shape, dtype=int)
+
+        offspring = np.where(crossover_mask, parents_1, parents_2)
+    else:
+        raise Exception("Unknown crossover method")
+
+    return offspring
+
+
+def split_position_color_crossover(genes):
+    n_individuals, n_features = genes.shape
+
+    if n_features % 5 != 0:
+        raise ValueError(
+            f"Expected genotype length divisible by 5, got length {n_features}."
+        )
+
+    n_points = n_features // 5
+
+    points = genes.reshape(n_individuals, n_points, 5)
+
+    position_genes = points[:, :, 0:2].reshape(n_individuals, n_points * 2)
+    color_genes = points[:, :, 2:5].reshape(n_individuals, n_points * 3)
+
+    crossed_positions = crossover(
+        position_genes,
+        "ONE_POINT"
+    )
+
+    crossed_colors = univariate_crossover(
+        color_genes,
+        "UNIVARIATE"
+    )
+
+    offspring_points = np.empty_like(points)
+
+    offspring_points[:, :, 0:2] = crossed_positions.reshape(
+        n_individuals,
+        n_points,
+        2
+    )
+
+    offspring_points[:, :, 2:5] = crossed_colors.reshape(
+        n_individuals,
+        n_points,
+        3
+    )
+
+    return offspring_points.reshape(n_individuals, n_features).astype(
+        genes.dtype,
+        copy=False
+    )
+
+
+def split_position_color_crossover_one_point_color(genes):
+    n_individuals, n_features = genes.shape
+
+    if n_features % 5 != 0:
+        raise ValueError(
+            f"Expected genotype length divisible by 5, got length {n_features}."
+        )
+
+    n_points = n_features // 5
+
+    points = genes.reshape(n_individuals, n_points, 5)
+
+    position_genes = points[:, :, 0:2].reshape(n_individuals, n_points * 2)
+    color_genes = points[:, :, 2:5].reshape(n_individuals, n_points * 3)
+
+    crossed_positions = crossover(
+        position_genes,
+        "ONE_POINT"
+    )
+
+    crossed_colors = crossover(
+        color_genes,
+        "ONE_POINT"
+    )
+
+    offspring_points = np.empty_like(points)
+
+    offspring_points[:, :, 0:2] = crossed_positions.reshape(
+        n_individuals,
+        n_points,
+        2
+    )
+
+    offspring_points[:, :, 2:5] = crossed_colors.reshape(
+        n_individuals,
+        n_points,
+        3
+    )
+
+    return offspring_points.reshape(n_individuals, n_features).astype(
+        genes.dtype,
+        copy=False
+    )
 
 
 def mutate(genes, feature_intervals,
