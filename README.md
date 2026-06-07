@@ -31,6 +31,25 @@ To start a Jupyter notebook instance, have Jupyter notebook [installed](https://
 
 ## Hypothesis 3
 
+Hypothesis 3
 - Uniform crossover applied to the spatial and color genes
-1. Switch to the branch `git switch split-position-color-ga
-2. The full experiment is in `analysis.ipynb` including the figures used in the presentation
+
+To run the code, do the following:
+
+Switch to the branch `git switch split-position-color-ga
+The full experiment is in analysis.ipynb including the figures used in the presentation
+Set TEST_CASE to either 1, 2 or 3, where:
+1: Runs Baseline vs Split (Uniform)
+2: Runs Baseline vs Split (Uniform) vs Split (One Point)
+3. Runs Baseline vs Split (Uniform) vs No Split (Uniform)
+
+
+Our hypothesis was that applying univariate crossover to the color genes would improve convergence because color information can be optimized independently for each cell. Spatial genes are somewhat dependent on one another: the effect of a cell's position depends on the positions of neighboring cells, and changing a single coordinate can significantly alter the boundaries and shapes of multiple regions, although in the case of one-point crossover on the unordered list, it is unclear how much of the points would stay together during variation.
+
+In contrast, color genes are independent from each other. A Voronoi cell can often benefit from inheriting a better red, green, or blue value from one parent without requiring corresponding changes to neighbouring cells. Small adjustments to individual color channels can improve the match to the target image while leaving the underlying spatial structure unchanged. Because of this relative independence, we expected gene-wise recombination to be more effective for colors, allowing offspring to combine useful color components from both parents at a much finer level than one-point crossover.
+
+We therefore split the genome into spatial and color components, applying one-point crossover to XY and uniform crossover to RGB separately. The experimental results supported this hypothesis, as the split spatial/color method using univariate crossover over the colors achieved improved fitness of 26.19% compared to the baseline. 
+
+To verify that this improvement was mainly caused by the univariate color crossover, we also tested a variant where the color genes used one-point crossover instead. This produced little improvement over the baseline. To further investigate the effect, we also applied uniform crossover to the original, unsplit individuals — producing results statistically indistinguishable from the split model. This may be explained by the random ordering of points in the genome: since spatial neighbors are not necessarily adjacent in the gene sequence, there are few positional dependencies for one-point crossover to exploit.
+
+We propose that uniform crossover's per-gene independence allows each point to optimize its position and color freely, whereas one-point crossover tends to inherit  adjacent genes together, constraining individual optimization.
