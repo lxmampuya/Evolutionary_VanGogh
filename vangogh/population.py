@@ -10,12 +10,13 @@ class Population:
     def initialize(self, feature_intervals):
         n = self.genes.shape[0]
         l = self.genes.shape[1]
-
         if self.initialization == "RANDOM":
             for i in range(l):
-                init_feat_i = np.random.randint(low=feature_intervals[i][0],
-                                                        high=feature_intervals[i][1], size=n)
-                self.genes[:, i] = init_feat_i
+                self.genes[:, i] = np.random.randint(
+                    low=feature_intervals[i][0],
+                    high=feature_intervals[i][1],
+                    size=n
+                )
         else:
             raise Exception("Unknown initialization method")
 
@@ -29,6 +30,8 @@ class Population:
         self.fitnesses = self.fitnesses[random_order]
 
     def is_converged(self):
+        if len(np.unique(self.fitnesses)) > 1:
+            return False
         return len(np.unique(self.genes, axis=0)) < 2
 
     def delete(self, indices):
