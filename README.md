@@ -10,7 +10,9 @@ To start a Jupyter notebook instance, have Jupyter notebook [installed](https://
 
 ---
 
-## Hypothesis1
+To access the repo use `git clone https://github.com/hunor022/ea_group11_project.git`.
+
+## Hypothesis 1
 
 - Hierarchical EA where we start with fewer points in earlier generation and increase it later. See hier_evo.py for code changes.
 1. Switch to the branch `git switch hypo1-hierarchical`
@@ -36,7 +38,7 @@ Hypothesis 3
 
 To run the code, do the following:
 
-Switch to the branch `git switch split-position-color-ga
+Switch to the branch `git switch split-position-color-ga`
 The full experiment is in analysis.ipynb including the figures used in the presentation
 Set TEST_CASE to either 1, 2 or 3, where:
 1: Runs Baseline vs Split (Uniform)
@@ -53,3 +55,15 @@ We therefore split the genome into spatial and color components, applying one-po
 To verify that this improvement was mainly caused by the univariate color crossover, we also tested a variant where the color genes used one-point crossover instead. This produced little improvement over the baseline. To further investigate the effect, we also applied uniform crossover to the original, unsplit individuals — producing results statistically indistinguishable from the split model. This may be explained by the random ordering of points in the genome: since spatial neighbors are not necessarily adjacent in the gene sequence, there are few positional dependencies for one-point crossover to exploit.
 
 We propose that uniform crossover's per-gene independence allows each point to optimize its position and color freely, whereas one-point crossover tends to inherit  adjacent genes together, constraining individual optimization.
+
+## Hypothesis 4
+ 
+- Spatial adaptation: Voronoi points in high-error image regions receive stronger mutation pressure than points in regions that already look good.
+
+1. Switch to the branch `git switch adaptive_spatial_ga`
+2. Open the notebook `analysis_h4.ipynb` for an example of how to run the experiments.
+
+The idea is that not all regions of the image are equally hard to reconstruct. After each generation the image is divided into a grid and the average pixel error per cell is computed. During mutation, each Voronoi point looks up which grid cell it sits in and gets its mutation probability and strength scaled proportionally to the error there. Points in bad regions explore more aggressively, points in already-good regions are left mostly alone.
+ 
+There is a stabilization phase at the start where the algorithm runs plain mutation first, giving the population time to form a rough approximation of local colors before spatial targeting kicks in to adjust more for geometric errors. The best fitness achieved was below 37000 using 100 Voronoi points.
+
