@@ -10,7 +10,7 @@ To start a Jupyter notebook instance, have Jupyter notebook [installed](https://
 
 ---
 
-To access the repo use `git clone https://github.com/hunor022/ea_group11_project.git`.
+To access the repo use `git clone https://github.com/lxmampuya/Evolutionary_VanGogh.git`.
 
 ## Hypothesis 1
 
